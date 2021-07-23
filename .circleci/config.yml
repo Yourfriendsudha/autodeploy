@@ -48,7 +48,7 @@ jobs:
     steps:
       - checkout
       - restore_cache:
-          keys: [frontend-build]
+          keys: [<< pipeline.id >>-frontend-build]
       - run:
           name: Build front-end
           command: |
@@ -58,7 +58,7 @@ jobs:
            npm run build
       - save_cache:
           paths: [frontend/node_modules]
-          key: frontend-build
+          key: << pipeline.id >>-frontend-build
       - slack/notify:
           channel: awsprojects
           event: fail
@@ -70,7 +70,7 @@ jobs:
     steps:
       - checkout
       - restore_cache:
-          keys: [backend-build]
+          keys: [<< pipeline.id >>-backend-build]
       - run:
           name: Back-end build
           command: |
@@ -80,7 +80,7 @@ jobs:
            npm run build
       - save_cache:
           paths: [backend/node_modules]
-          key: backend-build
+          key: << pipeline.id >>-backend-build
       - slack/notify:
           channel: awsprojects
           event: fail
@@ -92,13 +92,12 @@ jobs:
     steps:
       - checkout
       - restore_cache:
-          keys: [frontend-build]
+          keys: [<< pipeline.id >>-frontend-build]
       - run:
           name: test front-end
           command: |
            cd frontend
            echo "testing frontend"
-           npm install
            npm run test
       - slack/notify:
           channel: awsprojects
@@ -110,13 +109,12 @@ jobs:
     steps:
       - checkout
       - restore_cache:
-          keys: [backend-build]
+          keys: [<< pipeline.id >>-backend-build]
       - run:
           name: test Back-end
           command: |
            cd backend
            echo "testing backend"
-           npm install
            npm run test           
       - slack/notify:
           channel: awsprojects
@@ -128,7 +126,7 @@ jobs:
     steps:
       - checkout
       - restore_cache:
-          keys: [frontend-build]
+          keys: [<< pipeline.id >>-frontend-build]
       - run:
           name: scan front-end
           command: |
@@ -146,7 +144,7 @@ jobs:
     steps:
       - checkout
       - restore_cache:
-          keys: [backend-build]
+          keys: [<< pipeline.id >>-backend-build]
       - run:
           name: scan Back-end
           command: |
