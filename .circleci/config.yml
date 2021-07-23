@@ -133,7 +133,7 @@ jobs:
            cd frontend
            echo "audit frontend"
            npm install
-           npm audit --audit-level=critical --force
+           npm audit fix --audit-level=critical --force
       - slack/notify:
           channel: awsprojects
           event: fail
@@ -151,7 +151,7 @@ jobs:
            cd backend
            echo "audit backend"
            npm install
-           npm audit --audit-level=critical --force
+           npm audit fix --audit-level=critical --force
       - slack/notify:
           channel: awsprojects
           event: fail
