@@ -13,11 +13,16 @@ commands:
         type: string  
     steps:
       - run:
-          name: Destroy environments - CFN stacks
-          when: on_fail
+          name: Destroy backend Infra - cfn stack
           command: |
-            # Your code here
-            exit 1
+            aws cloudformation delete-stack --stack-name udapeople-backend-<< parameters.id >>
+          when: on_fail
+      - run:
+          name: Destroy fronend Infra
+          command: |
+            aws s3 rm s3://udapeople-<< parameters.id >> --recursive
+            aws cloudformation delete-stack --stack-name udapeople-frontend-<< parameters.id >>
+          when: on_fail
 
   revert-migrations:
     description: Revert the last migration if successfully run in the current workflow.
@@ -166,29 +171,42 @@ jobs:
           command: |
             aws cloudformation deploy \
               --template-file .circleci/files/backend.yml \
-              #--tags project=your-tag \
-              # --stack-name "your back-end stack name with workflow id" \
-              # --parameter-overrides ID="your workflow id"  
-              exit 1
+              --tags project=udaPeople-backend-Superpower \
+              --stack-name "backendCFN" \
+              --parameter-overrides ID="ss1j287dhjppmz1593"
       - run:
-          name: Ensure front-end infrastructure exist
+          name: Ensure front-end infrastructure exists
           command: |
             aws cloudformation deploy \
               --template-file .circleci/files/frontend.yml \
-              #--tags project=your-tag \
-              # --stack-name "your front-end stack name with workflow id" \
-              # --parameter-overrides ID="your workflow id"  
-              exit 1
+              --tags project=udaPeople-frontend-Superpower \
+              --stack-name "your front-end stack name with workflow id" \
+              --parameter-overrides ID="ss1j287dhjppmz1593"  
       - run:
           name: Add back-end ip to ansible inventory
           command: |
-            # Your code here
-            exit 1
+            cat inventory
+            aws ec2 describe-instances \
+              --query 'Reservations[*].Instances[*].PublicIpAddress' \
+              --filters "Name=tag:project,Values=udaPeople-frontend-Superpower" \
+              --output text >> inventory
+      - run:
+          name: Programmatically save the new back-end url 
+          command: |
+            host=$(aws ec2 describe-instances \
+              --query 'Reservations[*].Instances[*].PublicIpAddress' \
+              --filters "Name=tag:project,Values=udaPeople-backend-Superpower" \
+              --output text)
+
+            curl -H "Content-Type: text/plain" -H "token: 4f000549-cc4c-493a-af35-aefc582cfcb2" --request PUT --data "http://$host:3030" https://api.memstash.io/values/udaPeople-backend-url             
+            
       - persist_to_workspace:
           root: ~/
           paths:
             - project/.circleci/ansible/inventory.txt
-      # Here's where you will add some code to rollback on failure      
+      - destroy_environment:
+          id: ss1j287dhjppmz1593
+          when: on_fail     
 
   configure-infrastructure:
     docker:
