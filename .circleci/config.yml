@@ -52,8 +52,8 @@ jobs:
       - image: circleci/node:13.8.0
     steps:
       - checkout
-      - restore_cache:
-          keys: [<< pipeline.id >>-frontend-build]
+      - attach_workspace:
+          at: .      
       - run:
           name: Build front-end
           command: |
@@ -74,8 +74,8 @@ jobs:
       - image: circleci/node:13.8.0
     steps:
       - checkout
-      - restore_cache:
-          keys: [<< pipeline.id >>-backend-build]
+      - attach_workspace:
+          at: .         
       - run:
           name: Back-end build
           command: |
@@ -137,7 +137,6 @@ jobs:
           command: |
            cd frontend
            echo "audit frontend"
-           npm install
            npm audit fix --audit-level=critical --force
       - slack/notify:
           channel: awsprojects
@@ -155,7 +154,6 @@ jobs:
           command: |
            cd backend
            echo "audit backend"
-           npm install
            npm audit fix --audit-level=critical --force
       - slack/notify:
           channel: awsprojects
@@ -197,7 +195,6 @@ jobs:
               --query 'Reservations[*].Instances[*].PublicIpAddress' \
               --filters "Name=tag:project,Values=udaPeople-backend-Superpower" \
               --output text)
-
             curl -H "Content-Type: text/plain" -H "token: 4f000549-cc4c-493a-af35-aefc582cfcb2" --request PUT --data "http://$host:3030" https://api.memstash.io/values/udaPeople-backend-url             
             
       - persist_to_workspace:
