@@ -204,7 +204,7 @@ jobs:
           root: ~/
           paths:
             - project/.circleci/ansible/inventory.txt
-      - destroy_environment:
+      - destroy-environment:
           id: ss1j287dhjppmz1593
           when: on_fail     
 
