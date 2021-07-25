@@ -130,6 +130,8 @@ jobs:
       - image: circleci/node:13.8.0
     steps:
       - checkout
+      - attach_workspace:
+          at: .      
       - restore_cache:
           keys: [<< pipeline.id >>-frontend-build]
       - run:
@@ -138,7 +140,7 @@ jobs:
            cd frontend
            echo "audit frontend"
            npm install
-           npm audit fix --audit-level=critical --force
+           npm audit fix --audit-level=critical
       - slack/notify:
           channel: awsprojects
           event: fail
@@ -148,6 +150,8 @@ jobs:
       - image: circleci/node:13.8.0
     steps:
       - checkout
+      - attach_workspace:
+          at: .      
       - restore_cache:
           keys: [<< pipeline.id >>-backend-build]
       - run:
@@ -156,7 +160,7 @@ jobs:
            cd backend
            echo "audit backend"
            npm install
-           npm audit fix --audit-level=critical --force
+           npm audit fix --audit-level=critical
       - slack/notify:
           channel: awsprojects
           event: fail
