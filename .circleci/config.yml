@@ -21,7 +21,7 @@ commands:
           name: Destroy frontend Infra
           command: |
             aws s3 rm s3://udapeople-ss1j287dhjppmz1593 --recursive
-            # aws cloudformation delete-stack --stack-name udapeople-frontend-ss1j287dhjppmz1593
+            aws cloudformation delete-stack --stack-name udapeople-frontend-ss1j287dhjppmz1593
           when: on_fail
 
   revert-migrations:
