@@ -15,13 +15,13 @@ commands:
       - run:
           name: Destroy backend Infra
           command: |
-            aws cloudformation delete-stack --stack-name udapeople-backend-ss1j287dhjppmz1593
+            aws cloudformation delete-stack --stack-name udapeople-backend-<< parameters.id >>
           when: on_fail
       - run:
           name: Destroy frontend Infra
           command: |
             aws s3 rm s3://udapeople-ss1j287dhjppmz1593 --recursive
-            aws cloudformation delete-stack --stack-name udapeople-frontend-ss1j287dhjppmz1593
+            aws cloudformation delete-stack --stack-name udapeople-frontend-<< parameters.id >>
           when: on_fail
 
   revert-migrations:
@@ -176,42 +176,41 @@ jobs:
             echo "deploy backend infra"
             aws cloudformation deploy \
               --template-file .circleci/files/backend.yml \
-              --tags project=udaPeople-backend-Superpower-ss1j287dhjppmz1593 \
-              --stack-name "udapeople-backend-ss1j287dhjppmz1593" \
-              --parameter-overrides ID="ss1j287dhjppmz1593"
+              --tags project=udaPeople-backend-Superpower-${CIRCLE_WORKFLOW_ID} \
+              --stack-name "udapeople-backend-${CIRCLE_WORKFLOW_ID}" \
+              --parameter-overrides ID="${CIRCLE_WORKFLOW_ID}" 
       - run:
           name: Ensure front-end infrastructure exists
           command: |
             echo "deploy frontend infra"
             aws cloudformation deploy \
               --template-file .circleci/files/frontend.yml \
-              --tags project=udaPeople-frontend-Superpower-ss1j287dhjppmz1593 \
-              --stack-name "udapeople-frontend-ss1j287dhjppmz1593" \
-              --parameter-overrides ID="ss1j287dhjppmz1593"
+              --tags project=udaPeople-frontend-Superpower-${CIRCLE_WORKFLOW_ID} \
+              --stack-name "udapeople-frontend-${CIRCLE_WORKFLOW_ID}" \
+              --parameter-overrides ID="-${CIRCLE_WORKFLOW_ID}"
       - run:
           name: Add back-end ip to ansible inventory
           command: |
             echo "build inventory file"
-            cat inventory.txt
+            echo "[all]" >> .circleci/ansible/inventory.txt
             aws ec2 describe-instances \
               --query 'Reservations[*].Instances[*].PublicIpAddress' \
-              --filters "Name=tag:project,Values=udaPeople-frontend-Superpower-ss1j287dhjppmz1593" \
-              --output text >> inventory.txt
+              --filters "Name=tag:project,Values=udaPeople-frontend-Superpower-${CIRCLE_WORKFLOW_ID}" \
+              --output text >> .circleci/ansible/inventory.txt
       - run:
           name: Programmatically save the new back-end url 
           command: |
             host=$(aws ec2 describe-instances \
               --query 'Reservations[*].Instances[*].PublicIpAddress' \
-              --filters "Name=tag:project,Values=udaPeople-backend-Superpower" \
+              --filters "Name=tag:project,Values=udaPeople-backend-Superpower-${CIRCLE_WORKFLOW_ID}" \
               --output text)
-            curl -H "Content-Type: text/plain" -H "token: 4f000549-cc4c-493a-af35-aefc582cfcb2" --request PUT --data "http://$host:3030" https://api.memstash.io/values/udaPeople-backend-url             
-            
+            curl --write-out "%{http_code}\n" -H "Content-Type: text/plain" -H "token: 4f000549-cc4c-493a-af35-aefc582cfcb2" --request PUT --data "http://$host:3030" https://api.memstash.io/values/udaPeople-backend-url            
       - persist_to_workspace:
           root: ~/
           paths:
             - project/.circleci/ansible/inventory.txt
       - destroy-environment:
-          id: ss1j287dhjppmz1593
+          id: ${CIRCLE_WORKFLOW_ID}
           when: on_fail  
 
   configure-infrastructure:
@@ -232,7 +231,7 @@ jobs:
           command: |
             ansible-playbook -i inventory.txt configure-server.yml
       - destroy-environment:
-          id: ss1j287dhjppmz1593
+          id: ${CIRCLE_WORKFLOW_ID}
           when: on_fail      
 
   run-migrations:
@@ -240,17 +239,29 @@ jobs:
       - image: circleci/node:13.8.0
     steps:
       - checkout
+      - attach_workspace:
+          at: .      
       - run:
           name: Run migrations
           command: |
-            # Your code here
-            exit 1
+            cd backend
+            echo "Run migrations"          
+            npm run migrations > migration_status
       - run:
           name: Send migration results to memstash
+          working_directory: ./backend
           command: |
-            # Your code here
-            exit 1
-     # Here's where you will add some code to rollback on failure      
+            if grep -q "has been executed successfully" migration_status
+            then
+              echo "RUN migration success"
+              curl --write-out -H "Content-Type: text/plain" -H "token: 4f000549-cc4c-493a-af35-aefc582cfcb2" --request PUT --data "success" https://api.memstash.io/values/migration_${CIRCLE_WORKFLOW_ID}
+            else
+              echo "RUN migration failure"
+              curl --write-out -H "Content-Type: text/plain" -H "token: 4f000549-cc4c-493a-af35-aefc582cfcb2" --request PUT --data "failure" https://api.memstash.io/values/migration_${CIRCLE_WORKFLOW_ID}
+            fi
+      - destroy_environment:
+          id: ${CIRCLE_WORKFLOW_ID}
+          when: on_fail    
 
   deploy-frontend:
     docker:
