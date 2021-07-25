@@ -20,7 +20,10 @@ commands:
       - run:
           name: Destroy frontend Infra
           command: |
-            aws s3 rm s3://udapeople-ss1j287dhjppmz1593 --recursive
+            if [[ ! -z $(aws s3api list-buckets --query 'Buckets[?Name==`udapeople-<< parameters.id >>`]' --output text) ]]; then
+            echo "Bucket Exists"
+            aws s3 rm s3://udapeople-<< parameters.id >> --recursive
+            fi            
             aws cloudformation delete-stack --stack-name udapeople-frontend-<< parameters.id >>
           when: on_fail
 
@@ -259,9 +262,12 @@ jobs:
               echo "RUN migration failure"
               curl --write-out -H "Content-Type: text/plain" -H "token: 4f000549-cc4c-493a-af35-aefc582cfcb2" --request PUT --data "failure" https://api.memstash.io/values/migration_${CIRCLE_WORKFLOW_ID}
             fi
+      - revert-migrations:
+          workflow_id: "${CIRCLE_WORKFLOW_ID}" 
+          when: on_fail 
       - destroy-environment:
           id: ${CIRCLE_WORKFLOW_ID}
-          when: on_fail    
+          when: on_fail                        
 
   deploy-frontend:
     docker:
