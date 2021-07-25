@@ -8,20 +8,18 @@ commands:
     description: Destroy back-end and front-end cloudformation stacks given a workflow ID.
     parameters:
       when:
-        type: string
-      id:
-        type: string  
+        type: string 
     steps:
       - run:
-          name: Destroy backend Infra - cfn stack
+          name: Destroy backend Infra
           command: |
-            aws cloudformation delete-stack --stack-name udapeople-backend
+            aws cloudformation delete-stack --stack-name udapeople-backend-ss1j287dhjppmz1593
           when: on_fail
       - run:
-          name: Destroy fronend Infra
+          name: Destroy frontend Infra
           command: |
             aws s3 rm s3://udapeople-<< parameters.id >> --recursive
-            aws cloudformation delete-stack --stack-name udapeople-frontend
+            aws cloudformation delete-stack --stack-name udapeople-frontend-ss1j287dhjppmz1593
           when: on_fail
 
   revert-migrations:
@@ -169,22 +167,25 @@ jobs:
       - run:
           name: Ensure back-end infrastructure exists
           command: |
+            echo "deploy backend infra"
             aws cloudformation deploy \
               --template-file .circleci/files/backend.yml \
-              --tags project=udaPeople-backend-Superpower \
-              --stack-name "udapeople-backend" \
+              --tags project=udaPeople-backend-Superpower-ss1j287dhjppmz1593 \
+              --stack-name "udapeople-backend-ss1j287dhjppmz1593" \
               --parameter-overrides ID="ss1j287dhjppmz1593"
       - run:
           name: Ensure front-end infrastructure exists
           command: |
+            echo "deploy frontend infra"
             aws cloudformation deploy \
               --template-file .circleci/files/frontend.yml \
-              --tags project=udaPeople-frontend-Superpower \
-              --stack-name "udapeople-frontend" \
-              --parameter-overrides ID="ss1j287dhjppmz1593"  
+              --tags project=udaPeople-frontend-Superpower-ss1j287dhjppmz1593 \
+              --stack-name "udapeople-frontend-ss1j287dhjppmz1593" \
+              --parameter-overrides ID="ss1j287dhjppmz1593"
       - run:
           name: Add back-end ip to ansible inventory
           command: |
+            echo "build inventory file"
             cat inventory
             aws ec2 describe-instances \
               --query 'Reservations[*].Instances[*].PublicIpAddress' \
@@ -204,8 +205,7 @@ jobs:
           paths:
             - project/.circleci/ansible/inventory.txt
       - destroy-environment:
-          id: ss1j287dhjppmz1593
-          when: on_fail     
+          id: ss1j287dhjppmz1593  
 
   configure-infrastructure:
     docker:
