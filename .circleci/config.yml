@@ -8,7 +8,9 @@ commands:
     description: Destroy back-end and front-end cloudformation stacks given a workflow ID.
     parameters:
       when:
-        type: string 
+        type: string
+      id:
+        type: string    
     steps:
       - run:
           name: Destroy backend Infra
@@ -189,7 +191,7 @@ jobs:
             cat inventory
             aws ec2 describe-instances \
               --query 'Reservations[*].Instances[*].PublicIpAddress' \
-              --filters "Name=tag:project,Values=udaPeople-frontend-Superpower" \
+              --filters "Name=tag:project,Values=udaPeople-frontend-Superpower-ss1j287dhjppmz1593" \
               --output text >> inventory
       - run:
           name: Programmatically save the new back-end url 
