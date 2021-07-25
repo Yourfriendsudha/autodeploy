@@ -205,7 +205,8 @@ jobs:
           paths:
             - project/.circleci/ansible/inventory.txt
       - destroy-environment:
-          id: ss1j287dhjppmz1593  
+          id: ss1j287dhjppmz1593
+          when: on_fail  
 
   configure-infrastructure:
     docker:
