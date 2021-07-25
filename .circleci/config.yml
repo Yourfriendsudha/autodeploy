@@ -15,13 +15,13 @@ commands:
       - run:
           name: Destroy backend Infra - cfn stack
           command: |
-            aws cloudformation delete-stack --stack-name udapeople-backend-<< parameters.id >>
+            aws cloudformation delete-stack --stack-name udapeople-backend
           when: on_fail
       - run:
           name: Destroy fronend Infra
           command: |
             aws s3 rm s3://udapeople-<< parameters.id >> --recursive
-            aws cloudformation delete-stack --stack-name udapeople-frontend-<< parameters.id >>
+            aws cloudformation delete-stack --stack-name udapeople-frontend
           when: on_fail
 
   revert-migrations:
@@ -172,7 +172,7 @@ jobs:
             aws cloudformation deploy \
               --template-file .circleci/files/backend.yml \
               --tags project=udaPeople-backend-Superpower \
-              --stack-name "backendCFN" \
+              --stack-name "udapeople-backend" \
               --parameter-overrides ID="ss1j287dhjppmz1593"
       - run:
           name: Ensure front-end infrastructure exists
@@ -180,7 +180,7 @@ jobs:
             aws cloudformation deploy \
               --template-file .circleci/files/frontend.yml \
               --tags project=udaPeople-frontend-Superpower \
-              --stack-name "your front-end stack name with workflow id" \
+              --stack-name "udapeople-frontend" \
               --parameter-overrides ID="ss1j287dhjppmz1593"  
       - run:
           name: Add back-end ip to ansible inventory
