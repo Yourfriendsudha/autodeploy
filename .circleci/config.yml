@@ -45,6 +45,7 @@ commands:
              cd backend
              npm install
              npm run migrations:revert
+             echo "Migration reverted"
             fi
             
 jobs:
@@ -285,7 +286,7 @@ jobs:
       - run:
           name: Install dependencies
           command: |
-            apk add --update curl nodejs npm
+            apk add --update curl nodejs npm awscli
             pip install awscli
       - run:
           name: Get backend url
