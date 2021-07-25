@@ -192,11 +192,11 @@ jobs:
           name: Add back-end ip to ansible inventory
           command: |
             echo "build inventory file"
-            cat inventory
+            cat inventory.txt
             aws ec2 describe-instances \
               --query 'Reservations[*].Instances[*].PublicIpAddress' \
               --filters "Name=tag:project,Values=udaPeople-frontend-Superpower-ss1j287dhjppmz1593" \
-              --output text >> inventory
+              --output text >> inventory.txt
       - run:
           name: Programmatically save the new back-end url 
           command: |
@@ -219,19 +219,21 @@ jobs:
       - image: python:3.9.0-alpine
     steps:
       - checkout
-      # Add ssh keys with fingerprint
-      # attach workspace
+      - add_ssh_keys:
+          fingerprints: ["c8:16:7a:e1:45:5a:43:b0:a5:3a:7a:13:e4:a2:06:19"]
+      - attach_workspace:
+          at: .
       - run:
           name: Install dependencies
           command: |
-            # Your code here
-            exit 1
+            apk add --update ansible 
       - run:
           name: Configure server
           command: |
-            # Your code here
-            exit 1
-      # Here's where you will add some code to rollback on failure      
+            ansible-playbook -i inventory.txt configure-server.yml
+      - destroy_environment:
+          id: ss1j287dhjppmz1593
+          when: on_fail      
 
   run-migrations:
     docker:
