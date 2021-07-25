@@ -137,6 +137,7 @@ jobs:
           command: |
            cd frontend
            echo "audit frontend"
+           npm install
            npm audit fix --audit-level=critical --force
       - slack/notify:
           channel: awsprojects
@@ -154,6 +155,7 @@ jobs:
           command: |
            cd backend
            echo "audit backend"
+           npm install
            npm audit fix --audit-level=critical --force
       - slack/notify:
           channel: awsprojects
