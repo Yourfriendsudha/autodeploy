@@ -196,11 +196,13 @@ jobs:
           name: Add back-end ip to ansible inventory
           command: |
             echo "build inventory file"
-            echo "[all]" >> .circleci/ansible/inventory.txt
+            cd ./.circleci/ansible
+            echo "[all]" >> inventory.txt
             aws ec2 describe-instances \
               --query 'Reservations[*].Instances[*].PublicIpAddress' \
               --filters "Name=tag:project,Values=udaPeople-frontend-Superpower-${CIRCLE_WORKFLOW_ID}" \
-              --output text >> .circleci/ansible/inventory.txt
+              --output text >> inventory.txt
+            cat inventory.txt
       - run:
           name: Programmatically save the new back-end url 
           command: |
@@ -210,9 +212,9 @@ jobs:
               --output text)
             curl --write-out "%{http_code}\n" -H "Content-Type: text/plain" -H "token: 4f000549-cc4c-493a-af35-aefc582cfcb2" --request PUT --data "http://$host:3030" https://api.memstash.io/values/udaPeople-backend-url            
       - persist_to_workspace:
-          root: ~/
+          root: .
           paths:
-            - project/.circleci/ansible/inventory.txt
+            - .circleci/ansible/inventory
       - destroy-environment:
           id: ${CIRCLE_WORKFLOW_ID}
           when: on_fail  
@@ -246,13 +248,17 @@ jobs:
     steps:
       - checkout
       - attach_workspace:
-          at: .      
+          at: .  
+      - restore_cache:
+          keys: [<< pipeline.id >>-backend-build]              
       - run:
           name: Run migrations
           command: |
             cd backend
-            echo "Run migrations"          
+            echo "Run migrations" 
+            npm run premigrations         
             npm run migrations > migration_status
+            cat migration_status
       - run:
           name: Send migration results to memstash
           working_directory: ./backend
