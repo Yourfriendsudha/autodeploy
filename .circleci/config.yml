@@ -231,7 +231,7 @@ jobs:
           name: Configure server
           command: |
             ansible-playbook -i inventory.txt configure-server.yml
-      - destroy_environment:
+      - destroy-environment:
           id: ss1j287dhjppmz1593
           when: on_fail      
 
