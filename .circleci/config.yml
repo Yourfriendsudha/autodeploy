@@ -309,8 +309,6 @@ jobs:
             ls -lrt| wc -l
             aws s3 cp . s3://udapeople-${CIRCLE_WORKFLOW_ID} --recursive
             echo "deployed frontend"  
-            cd ../node_modules
-            ls -lrt| wc -1
 
       - destroy-environment:
           id: ${CIRCLE_WORKFLOW_ID}
