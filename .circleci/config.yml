@@ -386,7 +386,7 @@ jobs:
               --no-paginate --output text)
             echo "WorkflowID: $WorkflowID."
             curl -H "Content-Type: text/plain" -H "token: 4f000549-cc4c-493a-af35-aefc582cfcb2" --request PUT --data "$WorkflowID" https://api.memstash.io/values/WorkflowID
-            curl -H "token: 4f000549-cc4c-493a-af35-aefc582cfcb2" --request GET https://api.memstash.io/values/WorkflowID)
+            curl -H "token: 4f000549-cc4c-493a-af35-aefc582cfcb2" --request GET https://api.memstash.io/values/WorkflowID
             aws cloudformation deploy \
               --template-file .circleci/files/cloudfront.yml \
               --parameter-overrides ID="${CIRCLE_WORKFLOW_ID}" \
@@ -409,7 +409,6 @@ jobs:
           command: |
             GreenWorkflowID=$(curl -H "token: 1513db3b-15be-4750-bae6-3a8d32dd6de2" --request GET https://api.memstash.io/values/WorkflowID)
             BlueWorkflowID=${CIRCLE_WORKFLOW_ID}
-
             if [[ "$BlueWorkflowID" != "$GreenWorkflowID" ]]
             then
               aws s3 rm "s3://udapeople-${GreenWorkflowID}" --recursive
@@ -428,10 +427,10 @@ workflows:
           requires: [build-frontend]
       - test-backend:
           requires: [build-backend]
-      - scan-backend:
-          requires: [build-backend]
-      - scan-frontend:
-          requires: [build-frontend]
+      #- scan-backend:
+          #requires: [build-backend]
+      #- scan-frontend:
+          #requires: [build-frontend]
       - deploy-infrastructure:
           requires: [test-frontend, test-backend, scan-frontend, scan-backend]
           filters:
@@ -445,8 +444,8 @@ workflows:
           requires: [run-migrations]
       - deploy-backend:
           requires: [run-migrations]
-      - smoke-test:
-          requires: [deploy-backend, deploy-frontend]
+      #- smoke-test:
+          #requires: [deploy-backend, deploy-frontend]
       - cloudfront-update:
           requires: [smoke-test]
       - cleanup:
