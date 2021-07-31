@@ -383,10 +383,10 @@ jobs:
           name: Update cloudfront distribution
           command: |
             OLD_WORKFLOW_ID=$(aws cloudformation \
-              list-exports --query "Exports[?Name==\`UdapeopleWorkflowID\`].Value" \
+              list-exports --query "Exports[?Name==\`udaPeopleWorkflowID\`].Value" \
               --no-paginate --output text)
             echo "OLD_WORKFLOW_ID: $OLD_WORKFLOW_ID."
-            curl -H "Content-Type: text/plain" -H "token: 4f000549-cc4c-493a-af35-aefc582cfcb2" --request PUT --data "$WorkflowID" https://api.memstash.io/values/WorkflowID
+            curl -H "Content-Type: text/plain" -H "token: 4f000549-cc4c-493a-af35-aefc582cfcb2" --request PUT --data "$OLD_WORKFLOW_ID" https://api.memstash.io/values/WorkflowID
             aws cloudformation deploy \
               --template-file .circleci/files/cloudfront.yml \
               --parameter-overrides ID="${CIRCLE_WORKFLOW_ID}" \
