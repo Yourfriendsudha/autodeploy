@@ -391,10 +391,9 @@ jobs:
           command: |
             aws cloudformation deploy \
               --template-file .circleci/files/cloudfront.yml \
-              --stack-name udapeople-cloudfront \
-              --parameter-overrides WorkflowID="${CIRCLE_WORKFLOW_ID}" \
-              --tags project=udapeople
-  
+              --tags project=udaPeople-cloudfront-Superpower-${CIRCLE_WORKFLOW_ID} \
+              --stack-name "udaPeople-cloudfront-${CIRCLE_WORKFLOW_ID}" \
+              --parameter-overrides WorkflowID="${CIRCLE_WORKFLOW_ID}"   
       - revert-migrations:
           id: "${CIRCLE_WORKFLOW_ID}" 
           when: on_fail 
@@ -411,15 +410,17 @@ jobs:
       - run:
           name: Remove old stacks and files
           command: |
-            GreenWorkflowID=$(curl -H "token: 1513db3b-15be-4750-bae6-3a8d32dd6de2" --request GET https://api.memstash.io/values/WorkflowID)
+            GreenWorkflowID=$(curl -H "token: 4f000549-cc4c-493a-af35-aefc582cfcb2" --request GET https://api.memstash.io/values/WorkflowID)
             BlueWorkflowID=${CIRCLE_WORKFLOW_ID}
+            echo GreenWorkflowID
+            echo BlueWorkflowID
             if [[ "$BlueWorkflowID" != "$GreenWorkflowID" ]]
             then
               aws s3 rm "s3://udapeople-${GreenWorkflowID}" --recursive
               aws cloudformation delete-stack --stack-name "udapeople-frontend-${GreenWorkflowID}"
               aws cloudformation delete-stack --stack-name "udapeople-backend-${GreenWorkflowID}"
             else
-              echo "$BlueWorkflowID" == "$GreenWorkflowID". cleanup not required"
+              echo cleanup not required
             fi
 
 workflows:
