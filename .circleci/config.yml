@@ -405,19 +405,19 @@ jobs:
     steps:
       - checkout
       - run:
-          name: Get old stack workflow id
-          command: |
-            # your code here
-            export OldWorkflowID="the id here"
-            export STACKS=[] #put the list of stacks here
-      - run:
           name: Remove old stacks and files
           command: |
-            if [[ "${STACKS[@]}" =~ "${OldWorkflowID}" ]]
+            GreenWorkflowID=$(curl -H "token: 1513db3b-15be-4750-bae6-3a8d32dd6de2" --request GET https://api.memstash.io/values/WorkflowID)
+            BlueWorkflowID=${CIRCLE_WORKFLOW_ID}
+
+            if [[ "$BlueWorkflowID" != "$GreenWorkflowID" ]]
             then
-              # your code here
+              aws s3 rm "s3://udapeople-${GreenWorkflowID}" --recursive
+              aws cloudformation delete-stack --stack-name "udapeople-frontend-${GreenWorkflowID}"
+              aws cloudformation delete-stack --stack-name "udapeople-backend-${GreenWorkflowID}"
+            else
+              echo "$BlueWorkflowID" == "$GreenWorkflowID". cleanup not required"
             fi
-            
 
 workflows:
   default:
