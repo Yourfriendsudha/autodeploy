@@ -272,7 +272,6 @@ jobs:
             else
               echo "RUN migration failure"
               curl --write-out -H "Content-Type: text/plain" -H "token: 4f000549-cc4c-493a-af35-aefc582cfcb2" --request PUT --data "0" https://api.memstash.io/values/migration_${CIRCLE_WORKFLOW_ID}
-              return 1
               fi
       - revert-migrations:
           id: "${CIRCLE_WORKFLOW_ID}" 
