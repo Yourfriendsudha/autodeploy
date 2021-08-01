@@ -258,13 +258,14 @@ jobs:
           name: Run migrations
           command: |
             cd backend
+            ls -lrt
+            pwd
             echo "Run migrations" 
             npm run premigrations         
             npm run migrations > migration_status
             cat migration_status
       - run:
           name: Send migration results to memstash
-          working_directory: ./backend
           command: |
             if grep -q "has been executed successfully" migration_status
             then
@@ -322,6 +323,8 @@ jobs:
       - checkout
       - add_ssh_keys:
           fingerprints: ["c8:16:7a:e1:45:5a:43:b0:a5:3a:7a:13:e4:a2:06:19"]
+      - attach_workspace:
+          at: .      
       - run:
           name: Install dependencies
           command: |
@@ -329,8 +332,8 @@ jobs:
             pip install awscli
       - run:
           name: Deploy backend
+          working_directory: ./.circleci/ansible
           command: |
-            cd ./.circleci/ansible
             pwd
             cat inventory.txt
             ansible-playbook -i inventory.txt deploy-backend.yml 
