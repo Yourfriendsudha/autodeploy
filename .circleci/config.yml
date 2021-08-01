@@ -261,6 +261,7 @@ jobs:
             ls -lrt
             pwd
             echo "Run migrations" 
+            npm i
             npm run premigrations         
             npm run migrations > migration_status
             cat migration_status
@@ -328,7 +329,7 @@ jobs:
       - run:
           name: Install dependencies
           command: |
-            apk add --update curl nodejs npm ansible zip
+            apk add --update ansible curl openssh nodejs npm rsync
             pip install awscli
       - run:
           name: Deploy backend
