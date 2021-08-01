@@ -88,7 +88,7 @@ jobs:
       - slack/notify:
           channel: awsprojects
           event: fail
-          template: basic_fail_1          
+          template: basic_fail_1            
 
   test-frontend:
     docker:
@@ -332,6 +332,17 @@ jobs:
             apk add --update ansible curl openssh nodejs npm rsync
             pip install awscli
       - run:
+          name: Build backend
+          command: |
+            cd backend
+            npm i
+            npm audit fix
+            npm run build
+      - persist_to_workspace:
+          root: ~/
+          paths:
+            - project/backend/dist            
+      - run:
           name: Deploy backend
           working_directory: ./.circleci/ansible
           command: |
@@ -344,6 +355,7 @@ jobs:
       - revert-migrations:
           id: "${CIRCLE_WORKFLOW_ID}" 
           when: on_fail     
+          
 
   smoke-test:
     docker:
