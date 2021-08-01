@@ -324,7 +324,7 @@ jobs:
       - add_ssh_keys:
           fingerprints: ["c8:16:7a:e1:45:5a:43:b0:a5:3a:7a:13:e4:a2:06:19"]
       - attach_workspace:
-          at: .      
+          at: .circleci/ansible         
       - run:
           name: Install dependencies
           command: |
@@ -412,7 +412,7 @@ jobs:
           name: Clean up old environment
           command: |
             OldWorkflowID=$(curl -H "token: 9a087c8d-59a3-475a-a1a1-915a0bf3c376" --request GET https://api.memstash.io/values/OldWorkflowID)
-            CurrentWorkflowID=${CIRCLE_WORKFLOW_ID:0:7}
+            CurrentWorkflowID=${CIRCLE_WORKFLOW_ID}
             echo  "OldWorkflowID ${OldWorkflowID}"
             echo  "CurrentWorkflowID ${CurrentWorkflowID}"
             if [[ "$CurrentWorkflowID" != "$OldWorkflowID" ]]
@@ -422,6 +422,7 @@ jobs:
               aws s3 rm "s3://udapeople-${OldWorkflowID}" --recursive
               aws cloudformation delete-stack --stack-name "udapeople-frontend-${OldWorkflowID}"
               aws cloudformation delete-stack --stack-name "udapeople-backend-${OldWorkflowID}"
+              aws cloudformation delete-stack --stack-name "udaPeople-cloudfront-${OldWorkflowID}"
             else
               echo "cleanup not required"
             fi
