@@ -209,9 +209,9 @@ jobs:
             aws s3api list-buckets --query "Buckets[].Name"   
       - run:
           name: Add back-end ip to ansible inventory
+          working_directory: ./.circleci/ansible
           command: |
             echo "build inventory file"
-            cd ./.circleci/ansible
             aws ec2 describe-instances \
               --query 'Reservations[*].Instances[*].PublicIpAddress' \
               --filters "Name=tag:project,Values=udaPeople-backend-Superpower-${CIRCLE_WORKFLOW_ID}" \
@@ -228,9 +228,9 @@ jobs:
             echo "${host}"
             curl --write-out "%{http_code}\n" -H "Content-Type: text/plain" -H "token: 9a087c8d-59a3-475a-a1a1-915a0bf3c376" --request PUT --data "http://$host:3030" https://api.memstash.io/values/udaPeople-backend-url
       - persist_to_workspace:
-          root: .circleci/ansible
+          root: .
           paths:
-            - inventory.txt                  
+            - .circleci/ansible/inventory.txt              
       - destroy-environment:
           id: ${CIRCLE_WORKFLOW_ID}
           when: on_fail  
@@ -309,7 +309,7 @@ jobs:
     steps:
       - checkout
       - attach_workspace:
-          at: .circleci/ansible/      
+          at: .    
       - run:
           name: Install dependencies
           command: |
@@ -322,14 +322,18 @@ jobs:
             echo "${API_URL}"
       - run:
           name: Deploy frontend objects
+          working_directory: ./frontend          
           command: |
-            cd frontend
             npm install
             npm run build   
             cd dist
             ls -lrt| wc -l
             aws s3 cp . s3://udapeople-${CIRCLE_WORKFLOW_ID} --recursive
             echo "deployed frontend"  
+      - persist_to_workspace:
+          root: .
+          paths:
+            - frontend/dist            
       - destroy-environment:
           id: ${CIRCLE_WORKFLOW_ID}
           when: on_fail   
@@ -345,7 +349,7 @@ jobs:
       - add_ssh_keys:
           fingerprints: ["c8:16:7a:e1:45:5a:43:b0:a5:3a:7a:13:e4:a2:06:19"]
       - attach_workspace:
-          at: .circleci/ansible         
+          at: .      
       - run:
           name: Install dependencies
           command: |
