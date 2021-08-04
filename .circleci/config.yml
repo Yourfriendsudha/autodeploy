@@ -276,8 +276,7 @@ jobs:
           name: Run migrations
           working_directory: ./backend
           command: |
-            #npm run migrations > migration_status
-            npm run migrations:revert
+            npm run migrations > migration_status
       - run:
           name: Send migration results to memstash
           working_directory: ./backend
@@ -340,16 +339,14 @@ jobs:
       - add_ssh_keys:
           fingerprints: ["c8:16:7a:e1:45:5a:43:b0:a5:3a:7a:13:e4:a2:06:19"]
       - attach_workspace:
-          at: .circleci/ansible         
+          at: .       
       - run:
           name: Install dependencies
           command: |
             apk add --update ansible curl openssh nodejs npm rsync
             pip install awscli
-      - persist_to_workspace:
-          root: ~/
-          paths:
-            - project/backend/dist            
+      - restore_cache:
+          keys: [<< pipeline.id >>-backend-build]         
       - run:
           name: Deploy backend
           working_directory: ./.circleci/ansible
