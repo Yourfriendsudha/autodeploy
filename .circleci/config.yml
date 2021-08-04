@@ -34,15 +34,16 @@ commands:
     steps:
       - run:
           name: Revert migrations
+          working_directory: ./backend
           when: on_fail
           command: |
-            SUCCESS=$(curl -H "token: 9a087c8d-59a3-475a-a1a1-915a0bf3c376" --request GET https://api.memstash.io/values/migration_${CIRCLE_WORKFLOW_ID})
-            if(( $SUCCESS==1 )); 
+            SUCCESS=$(curl -H "token: 9a087c8d-59a3-475a-a1a1-915a0bf3c376" --request GET https://api.memstash.io/values/migration_<< parameters.id >>)
+            echo $SUCCESS
+            if [[ "$SUCCESS" == "success" ]]
             then
-             cd backend
-             npm install
-             npm run migrations:revert
-             echo "Migration reverted"
+              pwd
+              ls -la
+              npm run migrations:revert
             fi
             
 jobs:
@@ -67,6 +68,10 @@ jobs:
           channel: awsprojects
           event: fail
           template: basic_fail_1
+      - persist_to_workspace:
+          root: .
+          paths:
+            - frontend/node_modules          
 
   build-backend:
     docker:
@@ -88,7 +93,12 @@ jobs:
       - slack/notify:
           channel: awsprojects
           event: fail
-          template: basic_fail_1            
+          template: basic_fail_1   
+      - persist_to_workspace:
+          root: .
+          paths:
+            - backend/dist
+         
 
   test-frontend:
     docker:
@@ -269,15 +279,17 @@ jobs:
             npm run migrations > migration_status
       - run:
           name: Send migration results to memstash
+          working_directory: ./backend
           command: |
             if grep -q "has been executed successfully" migration_status
             then
-              echo "RUN migration success"
-              curl --write-out -H "Content-Type: text/plain" -H "token: 9a087c8d-59a3-475a-a1a1-915a0bf3c376" --request PUT --data "1" https://api.memstash.io/values/migration_${CIRCLE_WORKFLOW_ID}
+              echo "DB migration was successful, will update memstash..."
+              curl -H "Content-Type: text/plain" -H "token: 9a087c8d-59a3-475a-a1a1-915a0bf3c376" --request PUT --data "success" https://api.memstash.io/values/migration_${CIRCLE_WORKFLOW_ID}
             else
-              echo "RUN migration failure"
-              curl --write-out -H "Content-Type: text/plain" -H "token: 9a087c8d-59a3-475a-a1a1-915a0bf3c376" --request PUT --data "0" https://api.memstash.io/values/migration_${CIRCLE_WORKFLOW_ID}
-              fi
+              echo "DB migration failed, please verify setup! Probably the database already exists. Verify setup!"
+              curl -H "Content-Type: text/plain" -H "token: 9a087c8d-59a3-475a-a1a1-915a0bf3c376" --request PUT --data "failure" https://api.memstash.io/values/migration_${CIRCLE_WORKFLOW_ID}
+            fi
+            echo "WorkflowID=${CIRCLE_WORKFLOW_ID}"
       - revert-migrations:
           id: "${CIRCLE_WORKFLOW_ID}" 
           when: on_fail 
