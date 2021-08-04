@@ -346,13 +346,6 @@ jobs:
           command: |
             apk add --update ansible curl openssh nodejs npm rsync
             pip install awscli
-      - run:
-          name: Build backend
-          command: |
-            cd backend
-            npm i
-            npm audit fix
-            npm run build
       - persist_to_workspace:
           root: ~/
           paths:
