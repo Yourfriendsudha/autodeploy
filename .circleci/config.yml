@@ -56,8 +56,8 @@ jobs:
           at: .      
       - run:
           name: Build front-end
+          working_directory: ./frontend
           command: |
-           cd frontend
            echo "building frontend"
            npm install
            npm run build
@@ -82,8 +82,8 @@ jobs:
           at: .         
       - run:
           name: Back-end build
+          working_directory: ./backend
           command: |
-           cd backend
            echo "building backend"
            npm install
            npm run build
