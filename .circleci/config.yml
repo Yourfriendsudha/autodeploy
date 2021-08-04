@@ -71,7 +71,7 @@ jobs:
       - persist_to_workspace:
           root: .
           paths:
-            - frontend/node_modules          
+            - frontend/node_modules       
 
   build-backend:
     docker:
@@ -98,6 +98,7 @@ jobs:
           root: .
           paths:
             - backend/dist
+             -backend/node_modules
          
 
   test-frontend:
@@ -339,7 +340,7 @@ jobs:
       - add_ssh_keys:
           fingerprints: ["c8:16:7a:e1:45:5a:43:b0:a5:3a:7a:13:e4:a2:06:19"]
       - attach_workspace:
-          at: .       
+          at: .circleci/ansible         
       - run:
           name: Install dependencies
           command: |
