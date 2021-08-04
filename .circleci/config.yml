@@ -59,6 +59,7 @@ jobs:
           working_directory: ./frontend
           command: |
            echo "building frontend"
+           pwd
            npm install
            npm run build
       - save_cache:
@@ -85,6 +86,7 @@ jobs:
           working_directory: ./backend
           command: |
            echo "building backend"
+           pwd
            npm install
            npm run build
       - save_cache:
@@ -98,7 +100,6 @@ jobs:
           root: .
           paths:
             - backend/dist
-             -backend/node_modules
          
 
   test-frontend:
@@ -106,12 +107,15 @@ jobs:
       - image: circleci/node:13.8.0
     steps:
       - checkout
+      - attach_workspace:
+          at: .      
       - restore_cache:
           keys: [<< pipeline.id >>-frontend-build]
       - run:
           name: test front-end
+          working_directory: ./frontend
           command: |
-           cd frontend
+           pwd
            echo "testing frontend"
            npm run test
       - slack/notify:
@@ -127,8 +131,9 @@ jobs:
           keys: [<< pipeline.id >>-backend-build]
       - run:
           name: test Back-end
+          working_directory: ./backend          
           command: |
-           cd backend
+           pwd
            echo "testing backend"
            npm run test           
       - slack/notify:
