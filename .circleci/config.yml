@@ -276,7 +276,8 @@ jobs:
           name: Run migrations
           working_directory: ./backend
           command: |
-            npm run migrations > migration_status
+            #npm run migrations > migration_status
+            npm run migrations:revert
       - run:
           name: Send migration results to memstash
           working_directory: ./backend
