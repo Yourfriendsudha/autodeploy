@@ -297,7 +297,7 @@ jobs:
       - run:
           name: Install dependencies
           command: |
-              apk add --update ansible tar gzip ansible nodejs npm curl
+              apk add --update ansible tar gzip ansible nodejs npm curl typescript
               pip install awscli
       - run:
           name: Run migrations
@@ -327,7 +327,7 @@ jobs:
             
             npm run migrations:revert
             echo "RUNNING POSTGRES DATABASE MIGRATIONS"
-            npm run build
+            npm install
             npm run premigrations
             npm run migrations > migration.log
             MIGRATION_LOG=/root/project/backend/migration.log
