@@ -442,7 +442,6 @@ jobs:
             curl -sL https://rpm.nodesource.com/setup_10.x | bash -
       - run:
           name: Update cloudfront distribution
-          working_directory: ./.circleci/files
           command: |
             OldWorkflowID=$(aws cloudformation \
               list-exports --query "Exports[?Name==\`WorkflowID\`].Value" \
