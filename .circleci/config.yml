@@ -47,6 +47,35 @@ commands:
             fi
             
 jobs:
+
+  install-backend-dependencies:
+    docker:
+      - image: circleci/node:13.8.0
+    steps:
+      - checkout
+      - run:
+          name: npm install
+          working_directory: ./backend
+          command: ls -la && npm install
+      - persist_to_workspace:
+          root: .
+          paths:
+            - backend/node_modules
+
+
+  install-frontend-dependencies:
+   docker:
+      - image: circleci/node:13.8.0
+   steps:
+      - checkout
+      - run:
+          name: npm install
+          working_directory: ./frontend
+          command: ls -la && npm install
+      - persist_to_workspace:
+          root: .
+          paths:
+            - frontend/node_modules
   build-frontend:
     docker:
       - image: circleci/node:13.8.0
@@ -60,7 +89,6 @@ jobs:
           command: |
            echo "building frontend"
            pwd
-           npm install
            npm run build
       - save_cache:
           paths: [frontend/node_modules]
@@ -68,11 +96,7 @@ jobs:
       - slack/notify:
           channel: awsprojects
           event: fail
-          template: basic_fail_1
-      - persist_to_workspace:
-          root: .
-          paths:
-            - frontend/node_modules       
+          template: basic_fail_1      
 
   build-backend:
     docker:
@@ -87,7 +111,6 @@ jobs:
           command: |
            echo "building backend"
            pwd
-           npm install
            npm run build
       - save_cache:
           paths: [backend/node_modules]
@@ -468,8 +491,14 @@ jobs:
 workflows:
   default:
     jobs:
-      - build-frontend
-      - build-backend
+      - install-backend-dependencies
+      - install-frontend-dependencies
+      - build-backend:
+          requires:
+            - install-backend-dependencies
+      - build-frontend:
+          requires:
+            - install-frontend-dependencies
       - test-frontend:
           requires: [build-frontend]
       - test-backend:
