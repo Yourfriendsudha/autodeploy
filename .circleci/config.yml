@@ -327,6 +327,7 @@ jobs:
             
             npm run migrations:revert
             echo "RUNNING POSTGRES DATABASE MIGRATIONS"
+            npm run buildnpm run premigrations
             npm run migrations > migration.log
             MIGRATION_LOG=/root/project/backend/migration.log
             if test -f "$MIGRATION_LOG"; then
