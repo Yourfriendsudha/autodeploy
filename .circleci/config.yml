@@ -297,7 +297,7 @@ jobs:
       - run:
           name: Install dependencies
           command: |
-              apk add --update ansible tar gzip ansible nodejs npm curl typescript
+              apk add --update ansible tar gzip ansible nodejs npm curl
               pip install awscli
       - run:
           name: Run migrations
@@ -554,7 +554,8 @@ workflows:
       - scan-frontend:
           requires: [build-frontend]
       - deploy-infrastructure:          
-          requires: [test-frontend, test-backend, scan-frontend, scan-backend]
+          #requires: [test-frontend, test-backend, scan-frontend, scan-backend]
+          requires: [scan-frontend, scan-backend]
           filters:
             branches:
               only: [master]
