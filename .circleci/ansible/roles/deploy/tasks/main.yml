@@ -6,13 +6,33 @@
       dest: /home/ubuntu/udapeople
       recursive: true
 
+  - name: "upgrade packages."
+    become: true
+    apt:
+     upgrade: "yes"  
+
+  - name: "install dependencies."
+    become: true
+    apt:
+     name: ["nodejs", "npm", "tar"]
+     state: latest
+     update_cache: yes
+
   - name: "copy node_modules"
     become: yes
     synchronize:
       src: ../../backend/node_modules
       dest: /home/ubuntu/udapeople
       recursive: true
-
+      
+  - name: "install pm2"
+    become: true
+    npm:
+     name: pm2
+     global: yes
+     production: yes
+     state: present
+    
   - name: "stop all running instances"
     become: true
     command: pm2 delete all
@@ -25,8 +45,6 @@
       chdir: /home/ubuntu/udapeople/dist
       
     environment:
-      ENVIRONMENT: production
-      NODE_ENV: production
       TYPEORM_CONNECTION: "{{ lookup('env','TYPEORM_CONNECTION') }}"
       TYPEORM_HOST: "{{ lookup('env','TYPEORM_HOST') }}"
       TYPEORM_PORT: "{{ lookup('env','TYPEORM_PORT') }}"
