@@ -303,7 +303,7 @@ jobs:
           name: Run migrations
           working_directory: ./backend
           command: |
-            echo "BUILDING THE BACKEND ENVIRONMENT FILE FOR POSTGRES MIGRATIONS"
+            echo "-------create env file------"
             echo ENVIROMENT=production > .env
             echo TYPEORM_CONNECTION=postgres >> .env
             echo TYPEORM_MIGRATIONS_DIR=./src/migrations >> .env
@@ -316,6 +316,7 @@ jobs:
             echo TYPEORM_DATABASE=$TYPEORM_DATABASE >> .env
             ls -latr
             cat .env
+            echo "-------exit env file------"
             echo "INSTALLING NPM MODULE DEPENDENCIES"
             npm i > npminstall.log
             echo "INSTALLING OATH-SIGN PACKAGE"
@@ -324,40 +325,44 @@ jobs:
             echo "HOST: " $TYPEORM_HOST
             echo "PWD: " $(pwd)
             echo $TYPEORM_DATABASE
-            
+            echo "-------npm migrations revert , if in case its already done------"
             npm run migrations:revert
-            echo "RUNNING POSTGRES DATABASE MIGRATIONS"
+             echo "-------npm migrations begin------"
             npm install
             npm run premigrations
-            npm run migrations > migration.log
-            MIGRATION_LOG=/root/project/backend/migration.log
+            npm run migrations > migration.txt
+            MIGRATION_LOG=/root/project/backend/migration.txt
             if test -f "$MIGRATION_LOG"; then
                 echo "$MIGRATION_LOG exists."
             fi
-            echo "Output of the migration log"
-            cat migration.log
+            echo "-----Output of the migration log----"
+            cat migration.txt
 
       - run:
           name: Send migration results to memstash
           working_directory: ./backend
           command: |
-              MIGRATION_LOG=/root/project/backend/migration.log
+              MIGRATION_LOG=/root/project/backend/migration.txt
               if test -f "$MIGRATION_LOG"; then
                   echo "$MIGRATION_LOG exists."
               fi
               if grep -q "has been executed successfully" $MIGRATION_LOG; then
-                echo "SUCCESSFULLY EXECUTED THE DATABASE MIGRATIONS"
-                echo "Writing out to memstash : https://api.memstash.io/values/migration_${CIRCLE_WORKFLOW_ID:0:7}"
+                echo "Migration - Success"               
                 curl -H "Content-Type: text/plain" -H "token: 9a087c8d-59a3-475a-a1a1-915a0bf3c376" --request PUT \
-                  --data "success" https://api.memstash.io/values/migration_${CIRCLE_WORKFLOW_ID:0:7}
+                  --data "success" https://api.memstash.io/values/migration_${CIRCLE_WORKFLOW_ID}
               else
-                echo "FAILED TO RUN THE DATABASE MIGRATIONS"
-                echo "Writing out to memstash : https://api.memstash.io/values/migration_${CIRCLE_WORKFLOW_ID:0:7}"
+                echo "Migration - failure"
                 curl -H "Content-Type: text/plain" -H "token: 9a087c8d-59a3-475a-a1a1-915a0bf3c376" --request PUT \
-                  --data "failure" https://api.memstash.io/values/migration_${CIRCLE_WORKFLOW_ID:0:7}
+                  --data "failure" https://api.memstash.io/values/migration_${CIRCLE_WORKFLOW_ID}
                 exit 1
               fi
               echo "WorkflowID=${CIRCLE_WORKFLOW_ID}"
+      - run:
+          name: migration smoke test.
+          working_directory: ./backend          
+          command: |
+            export migration-status-check=$(curl -H "token: 9a087c8d-59a3-475a-a1a1-915a0bf3c376" --request GET https://api.memstash.io/values/migration_${CIRCLE_WORKFLOW_ID})
+            echo "${migration-status-check}"              
       - revert-migrations:
           id: "${CIRCLE_WORKFLOW_ID}" 
           when: on_fail 
@@ -515,13 +520,12 @@ jobs:
             --stack-status-filter CREATE_COMPLETE --no-paginate --output text)) 
 
             CurrentWorkflowID=${CIRCLE_WORKFLOW_ID}
-            echo  OldWorkflowID "${OldWorkflowID}"
+            echo  "OldWorkflowID ${OldWorkflowID}"
             echo  "CurrentWorkflowID ${CurrentWorkflowID}"
-            if [[ "$CurrentWorkflowID" != "$OldWorkflowID" ]]
+            if [[ "${STACKS[@]}" =~ "$OldWorkflowID" ]]
             then
               echo "$OldWorkflowID!=$CurrentWorkflowID"
-
-              aws s3 rm "s3://udapeople-${OldWorkflowID}" --recursive
+              aws s3 rm "s3://udapeople-${OldWorkflowID}" --recursive              
               aws cloudformation delete-stack --stack-name "udapeople-frontend-${OldWorkflowID}"
               aws cloudformation delete-stack --stack-name "udapeople-backend-${OldWorkflowID}"
               aws cloudformation delete-stack --stack-name "udaPeople-cloudfront-${OldWorkflowID}"
