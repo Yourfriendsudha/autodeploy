@@ -354,13 +354,7 @@ jobs:
                   --data "failure" https://api.memstash.io/values/migration_${CIRCLE_WORKFLOW_ID}
                 exit 1
               fi
-              echo "WorkflowID=${CIRCLE_WORKFLOW_ID}"
-      - run:
-          name: migration smoke test.
-          working_directory: ./backend          
-          command: |
-            migration-status-check=$(curl -H "token: 9a087c8d-59a3-475a-a1a1-915a0bf3c376" --request GET https://api.memstash.io/values/migration_${CIRCLE_WORKFLOW_ID})
-            echo "${migration-status-check}"              
+              echo "WorkflowID=${CIRCLE_WORKFLOW_ID}"             
       - revert-migrations:
           id: "${CIRCLE_WORKFLOW_ID}" 
           when: on_fail 
