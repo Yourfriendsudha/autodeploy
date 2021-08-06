@@ -39,12 +39,8 @@ commands:
           command: |
             SUCCESS=$(curl -H "token: 9a087c8d-59a3-475a-a1a1-915a0bf3c376" --request GET https://api.memstash.io/values/migration_<< parameters.id >>)
             echo $SUCCESS
-            if [[ "$SUCCESS" == "success" ]]
-            then
-              pwd
-              ls -la
-              npm run migrations:revert
-            fi
+            npm run migrations:revert
+
             
 jobs:
 
@@ -352,7 +348,6 @@ jobs:
                 echo "Migration - failure"
                 curl -H "Content-Type: text/plain" -H "token: 9a087c8d-59a3-475a-a1a1-915a0bf3c376" --request PUT \
                   --data "failure" https://api.memstash.io/values/migration_${CIRCLE_WORKFLOW_ID}
-                exit 1
               fi
               echo "WorkflowID=${CIRCLE_WORKFLOW_ID}"             
       - revert-migrations:
