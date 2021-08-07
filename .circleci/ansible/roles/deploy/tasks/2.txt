@@ -1,0 +1,37 @@
+- name: "upgrade packages."
+  become: true
+  apt:
+    upgrade: "yes"
+
+- name: "install dependencies."
+  become: true
+  apt:
+    name: ["nodejs", "npm"]
+    update_cache: yes
+
+- name: "install pm2"
+  become: true
+  npm:
+    name: pm2
+    global: yes
+    production: yes
+    state: present
+
+- name: "deploy backend app to new location"
+  become: true
+  copy:
+    src: app.tar.gz
+    dest: /home/ubuntu/
+    
+- name: "Unpack app.tar.gz"
+  become: true
+  shell: |
+    cd /home/ubuntu/
+    tar xzvf app.tar.gz
+    rm app.tar.gz
+    ls
+- name: "running backend app"
+  become: true
+  shell: |
+    cd /home/ubuntu/dist
+    pm2 start main.js
