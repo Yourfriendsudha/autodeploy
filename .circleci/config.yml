@@ -334,7 +334,7 @@ jobs:
                     
   deploy-backend:
     docker:
-      - image: python:3.7-alpine3.11
+      - image: python:3.7-alpine3.12
     steps:
       - checkout
       - add_ssh_keys:
@@ -346,42 +346,45 @@ jobs:
           command: |
             apk add --update curl nodejs npm ansible zip
             pip install awscli
-      - run:
-          name: Build backend
-          command: |
-            cd backend
-            npm i
-            npm audit fix
-            npm run build
       - persist_to_workspace:
           root: ~/
           paths:
             - project/backend/dist
-      - attach_workspace:
-          at: ~/
       - run:
-          name: Deploy to EC2
-          command:
-            cd backend/dist
-            cp ../package.json .
-            zip -rq dist.zip *
-            mkdir -p .circleci/.ansible/roles/deploy/files/
-            mv dist.zip .circleci/.ansible/roles/deploy/files/
-            ansible-playbook -i inventory.txt .circleci/.ansible/deploy-backend.yml
-            echo "Done"  
-
+          name: Deploy backend
+          no_output_timeout: 60m
+          command: |
+            echo ENVIRONMENT=production >> "backend/.env"
+            echo NODE_ENV=production >> "backend/.env"
+            echo TYPEORM_CONNECTION=postgres >> "backend/.env"
+            echo TYPEORM_MIGRATIONS_DIR=./src/migrations >> "backend/.env"
+            echo TYPEORM_ENTITIES=./src/modules/domain/**/*.entity.ts >> "backend/.env"
+            echo TYPEORM_MIGRATIONS=./src/migrations/*.ts >> "backend/.env"
+            echo TYPEORM_HOST=$TYPEORM_HOST >> "backend/.env"
+            echo TYPEORM_PORT=$TYPEORM_PORT >> "backend/.env"
+            echo TYPEORM_USERNAME=$TYPEORM_USERNAME >> "backend/.env"
+            echo TYPEORM_PASSWORD=$TYPEORM_PASSWORD >> "backend/.env"
+            echo TYPEORM_DATABASE=$TYPEORM_DATABASE >> "backend/.env"
+            tar -C backend -czvf artifact.tar.gz .
+            cd .circleci/ansible
+            ansible-playbook -i inventory.txt deploy-backend.yml
+      - destroy-environment:
+          workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
+      - revert-migrations:
+          workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}" 
+           
   smoke-test:
     docker:
-      - image: python:3.7-alpine3.11
+      - image: python:3.7-alpine3.12 
     steps:
       - checkout
-      - attach_workspace:
-          at: .        
       - run:
           name: Install dependencies
           command: |
             apk add --update curl nodejs npm
             pip install awscli
+      - attach_workspace:
+          at: .        
       - run:
           name: Backend smoke test.
           command: |
@@ -397,10 +400,10 @@ jobs:
             else
             return 1
             fi
-      # - destroy-environment:
-      #     workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
-      # - revert-migrations:
-      #     workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}" 
+      - destroy-environment:
+          workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
+      - revert-migrations:
+          workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}" 
        
 
   cloudfront-update:
