@@ -217,15 +217,17 @@ jobs:
               --parameter-overrides ID="${CIRCLE_WORKFLOW_ID:0:7}"
       - run:
           name: Add back-end ip to ansible inventory
+          working_directory: ./.circleci/ansible
           command: |
             BACKEND_GET_IP=$(aws ec2 describe-instances \
               --filters "Name=tag:project,Values=udapeople-backend-prod-${CIRCLE_WORKFLOW_ID:0:7}" \
               --query 'Reservations[*].Instances[*].PublicIpAddress' \
               --output text)
             echo "[all]" >> .circleci/ansible/inventory.txt
-            echo "$BACKEND_GET_IP" >> .circleci/ansible/inventory.txt
+            echo "$BACKEND_GET_IP" >> inventory.txt
             echo "------inventory contents------"
-            cat .circleci/ansible/inventory.txt
+            cat inventory.txt
+            pwd
       - run:
           name: Programmatically save the new back-end url 
           command: |
@@ -237,9 +239,9 @@ jobs:
             curl --write-out "%{http_code}\n" -H "Content-Type: text/plain" -H "token: 9a087c8d-59a3-475a-a1a1-915a0bf3c376" --request PUT --data "http://$host:3030" https://api.memstash.io/values/udapeople-backend-url      
       - run: yum -y install tar gzip
       - persist_to_workspace:
-          root: ~/
+          root: .
           paths:
-            - project/.circleci/ansible/inventory.txt
+            - .circleci/ansible/inventory.txt
       - destroy-environment:      
           workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
   
@@ -251,7 +253,7 @@ jobs:
       - add_ssh_keys:
           fingerprints: ["f6:35:9d:5c:15:81:f8:b2:c4:85:a1:da:81:36:36:ce"]
       - attach_workspace:
-          at: ~/
+          at: .
       - run:
           name: Install dependencies
           command: |
@@ -350,7 +352,7 @@ jobs:
             apk add --update ansible curl openssh nodejs npm rsync
             pip install awscli
       - restore_cache:
-          keys: [<< pipeline.id >>-backend-build]   
+          keys: [<< pipeline.id >>-backend-build]
       - run:
           name: Build backend
           command: |
