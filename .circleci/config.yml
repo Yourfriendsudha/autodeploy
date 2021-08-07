@@ -318,19 +318,21 @@ jobs:
             apk add --update curl nodejs npm
             pip install awscli
       - run:
-          name: Get backend url
+          name: Deploy frontend objects
           command: |
             export API_URL=$(curl -H "token: 9a087c8d-59a3-475a-a1a1-915a0bf3c376" --request GET https://api.memstash.io/values/udapeople-backend-url)
             echo "${API_URL}"
-      - run:
-          name: Deploy frontend objects
-          command: |
+            echo "${API_URL}" >> "frontend/.env"
             cd frontend
-            npm i
+            npm install
             npm run build   
             cd dist
             aws s3 cp . s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7} --recursive
             echo "Done"      
+      - revert-migrations:
+          workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"     
+      - destroy-environment:      
+          workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"                
                     
   deploy-backend:
     docker:
@@ -344,12 +346,8 @@ jobs:
       - run:
           name: Install dependencies
           command: |
-            apk add --update curl nodejs npm ansible zip
+            apk add --update tar gzip ansible nodejs npm
             pip install awscli
-      - persist_to_workspace:
-          root: ~/
-          paths:
-            - project/backend/dist
       - run:
           name: Deploy backend
           no_output_timeout: 60m
@@ -372,7 +370,7 @@ jobs:
           workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
       - revert-migrations:
           workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}" 
-           
+
   smoke-test:
     docker:
       - image: python:3.7-alpine3.12 
@@ -383,29 +381,30 @@ jobs:
           command: |
             apk add --update curl nodejs npm
             pip install awscli
-      - attach_workspace:
-          at: .        
       - run:
-          name: Backend smoke test.
+          name: Get backend url, run backend smoke test
           command: |
-            export API_URL=$(curl -H "token: 9a087c8d-59a3-475a-a1a1-915a0bf3c376" --request GET https://api.memstash.io/values/udapeople-backend-url)
-            echo "${API_URL}"          
-            curl -s $API_URL/api/status            
+            BACKEND_IP=`(aws ec2 describe-instances --region us-west-1 --query "Reservations[*].Instances[*].PublicIpAddress"  --filters "Name=tag:Name,Values=udapeople-backend" --no-paginate --output text)`
+            export API_URL="http://${BACKEND_IP}:3030"
+            echo "${API_URL}"
+            if curl -is ${API_URL}/api/status|grep "200" ; then  echo "backend smoke test passed"; else echo "backend smoke test failed"; fi
       - run:
           name: Frontend smoke test.
           command: |
-            if curl -s http://udapeople-prod-${CIRCLE_WORKFLOW_ID:0:7}.s3-website.us-west-1.amazonaws.com/index.html | grep "Welcome"
-            then
-            return 0
-            else
-            return 1
-            fi
+             URL="http://udapeople-${CIRCLE_WORKFLOW_ID:0:7}.s3-website-us-west-1.amazonaws.com/index.html#/employees"
+             echo Frontend_URL: ${URL}
+             #if curl -s ${URL} | grep "Welcome"; then  echo "frontend smoke test passed"; else  echo "frontend smoke test failed"; fi
+             if curl -s ${URL} | grep "Welcome"
+               then
+                 return 1
+               else
+                  return 0
+             fi             
       - destroy-environment:
           workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
       - revert-migrations:
           workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}" 
        
-
   cloudfront-update:
     docker:
       - image: amazon/aws-cli
