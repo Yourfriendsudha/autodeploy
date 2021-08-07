@@ -1,23 +1,45 @@
----
+---     
+- name: "copy backend binaries"
+  become: yes
+  synchronize:
+    src: ../../backend/dist
+    dest: /home/ubuntu/udapeople
+    recursive: true
 
-- name: Copy files from circleci to backend server
-  copy:
-    src: /root/project/backend
-    dest: /home/ubuntu/
-
-- name: Stop PM2
-  ignore_errors: yes
-  shell: |
-    pm2 stop backend
-    pm2 delete backend
-- name: Build node service
-  shell: |
-    cd /home/ubuntu/backend
-    npm i
-    npm audit fix --audit-level=critical --force
-    npm run build
+- name: "copy node_modules"
+  become: yes
+  synchronize:
+    src: ../../backend/node_modules
+    dest: /home/ubuntu/udapeople
+    recursive: true
       
-- name: Start pm2 service
+- name: "install pm2"
+  become: true
+  npm:
+    name: pm2
+    global: yes
+    production: yes
+    state: present
+
+- name: "Install backend dependencies using NPM"
+  command: npm install --production
+  args:
+    chdir: /home/ubuntu/app
+
+- name: "Start backend with pm2"
   shell: |
-    cd /home/ubuntu/backend
-    pm2 start npm --name backend -- start
+    export ENVIRONMENT=production
+    export NODE_ENV=production
+    export TYPEORM_HOST="{{ lookup('env', 'TYPEORM_HOST') }}"
+    export TYPEORM_ENTITIES="{{ lookup('env', 'TYPEORM_ENTITIES') }}"
+    export TYPEORM_USERNAME="{{ lookup('env', 'TYPEORM_USERNAME') }}"
+    export TYPEORM_PASSWORD="{{ lookup('env', 'TYPEORM_PASSWORD') }}"
+    export TYPEORM_DATABASE="{{ lookup('env', 'TYPEORM_DATABASE') }}"
+    pm2 start main.js --name udapeople-backend
+  args:
+    chdir: /home/ubuntu/app
+
+- name: "Set pm2 start as service"
+  become: yes
+  shell: |
+    env PATH=$PATH:/usr/local/bin pm2 startup -u ubuntu

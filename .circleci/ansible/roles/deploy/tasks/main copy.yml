@@ -1,16 +1,4 @@
----
-- name: "upgrade packages."
-  become: true
-  apt:
-    upgrade: "yes"  
-
-- name: "install dependencies."
-  become: true
-  apt:
-    name: ["nodejs", "npm", "tar"]
-    state: latest
-    update_cache: yes
-     
+---     
 - name: "copy backend binaries"
   become: yes
   synchronize:
@@ -32,26 +20,12 @@
     global: yes
     production: yes
     state: present
-    
-# - name: "stop all running instances"
-#   become: true
-#   command: pm2 delete all
-#   ignore_errors: true
 
 - name: "start server"
   become: true
-  command: pm2 start -f ./main.js
+  command: pm2 start npm -- run start
   args:
     chdir: /home/ubuntu/udapeople/dist
-  register: execute_node  
-    
-- name: print message
-  debug:
-    msg: "{{ execute_node.stdout_lines }}"
-
-- name: "Configure pm2 to start as service"
-  shell: |
-    env PATH=$PATH:/usr/local/bin pm2 startup -u ubuntu
 
   environment:
     ENVIRONMENT: production
