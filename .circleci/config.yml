@@ -203,7 +203,7 @@ jobs:
           command: |
             aws cloudformation deploy \
               --template-file .circleci/files/backend.yml \
-              --tags project=udapeople-Project4-backend \
+              --tags project=udapeople-backend \
               --stack-name "udapeople-backend-prod-${CIRCLE_WORKFLOW_ID:0:7}" \
               --parameter-overrides ID="${CIRCLE_WORKFLOW_ID:0:7}"
       - run:
@@ -211,7 +211,7 @@ jobs:
           command: |
             aws cloudformation deploy \
               --template-file .circleci/files/frontend.yml \
-              --tags project=udapeople-Project4-frontend \
+              --tags project=udapeople-frontend \
               --stack-name "udapeople-frontend-prod-${CIRCLE_WORKFLOW_ID:0:7}" \
               --parameter-overrides ID="${CIRCLE_WORKFLOW_ID:0:7}"
       - run:
@@ -223,6 +223,17 @@ jobs:
               --output text)
             echo "[all]" >> .circleci/ansible/inventory.txt
             echo "$BACKEND_GET_IP" >> .circleci/ansible/inventory.txt
+            echo "------inventory contents------"
+            cat .circleci/ansible/inventory.txt
+      - run:
+          name: Programmatically save the new back-end url 
+          command: |
+            host=$(aws ec2 describe-instances \
+              --query 'Reservations[*].Instances[*].PublicIpAddress' \
+              --filters "Name=tag:project,Values=udapeople-backend" \
+              --output text)
+            echo "${host}"
+            curl --write-out "%{http_code}\n" -H "Content-Type: text/plain" -H "token: 9a087c8d-59a3-475a-a1a1-915a0bf3c376" --request PUT --data "http://$host:3030" https://api.memstash.io/values/udapeople-backend-url      
       - run: yum -y install tar gzip
       - persist_to_workspace:
           root: ~/
@@ -248,6 +259,8 @@ jobs:
       - run:
           name: Configure server
           command: |
+            echo "------inventory contents------"
+            cat .circleci/ansible/inventory.txt
             ansible-playbook -i .circleci/ansible/inventory.txt .circleci/ansible/configure-server.yml
       - destroy-environment:      
           workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
@@ -350,25 +363,23 @@ jobs:
       - image: python:3.7-alpine3.11
     steps:
       - checkout
+      - attach_workspace:
+          at: .        
       - run:
           name: Install dependencies
           command: |
-            apk add --update curl
+            apk add --update curl nodejs npm
             pip install awscli
-      - run:
-          name: Get backend url
-          command: |
-            API_URL=`curl -H "token: 9a087c8d-59a3-475a-a1a1-915a0bf3c376" --request GET https://api.memstash.io/values/migration_${CIRCLE_WORKFLOW_ID:0:7}`
-            echo $API_URL
-            curl -s $API_URL/api/status
       - run:
           name: Backend smoke test.
           command: |
-            
+            export API_URL=$(curl -H "token: 9a087c8d-59a3-475a-a1a1-915a0bf3c376" --request GET https://api.memstash.io/values/udapeople-backend-url)
+            echo "${API_URL}"          
+            curl -s $API_URL/api/status            
       - run:
           name: Frontend smoke test.
           command: |
-            if curl -s http://udapeople-prod-${CIRCLE_WORKFLOW_ID:0:7}.s3-website.us-west-1.amazonaws.com/ | grep "Welcome"
+            if curl -s http://udapeople-prod-${CIRCLE_WORKFLOW_ID:0:7}.s3-website.us-west-1.amazonaws.com/index.html | grep "Welcome"
             then
             return 0
             else
