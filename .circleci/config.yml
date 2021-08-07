@@ -366,6 +366,7 @@ jobs:
             echo TYPEORM_PASSWORD=$TYPEORM_PASSWORD >> "backend/.env"
             echo TYPEORM_DATABASE=$TYPEORM_DATABASE >> "backend/.env"
             cd backend
+            pwd
             npm i
             npm run build
             cp -rf node_modules ./dist/
@@ -381,13 +382,12 @@ jobs:
             echo TYPEORM_DATABASE=$TYPEORM_DATABASE >> ~/project/backend/dist/.env
             cat dist/.env
             tar -czvf app.tar.gz ./dist/*
-            cp app.tar.gz ~/project/.circleci/ansible/roles/deploy/files/
+            cp app.tar.gz ./.circleci/ansible/roles/deploy/files/
             
             pwd  
-            cd ~/project/.circleci/ansible
 
             export ANSIBLE_HOST_KEY_CHECKING=False
-            ansible-playbook -i inventory.txt deploy-backend.yml -vv
+            ansible-playbook -i .circleci/ansible/inventory.txt .circleci/ansible/deploy-backend.yml -vv
       - destroy-environment:
           workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
       - revert-migrations:
