@@ -414,11 +414,17 @@ jobs:
           keys: [<< pipeline.id >>-backend-build]         
       - run:
           name: Deploy backend
-          working_directory: ./.circleci/ansible
+          working_directory: .backend
           command: |
             pwd
             cat inventory.txt
-            ansible-playbook -i inventory.txt deploy-backend.yml 
+            cd dist
+            cp ../package.json .
+            zip -rq dist.zip *
+            mkdir -p .circleci/.ansible/roles/deploy/files/
+            mv dist.zip .circleci/.ansible/roles/deploy/files/
+            ansible-playbook -i ./.circleci/ansible/inventory.txt ./.circleci/ansible/deploy-backend.yml 
+            echo "Done"  
       - destroy-environment:
           id: ${CIRCLE_WORKFLOW_ID}
           when: on_fail    
