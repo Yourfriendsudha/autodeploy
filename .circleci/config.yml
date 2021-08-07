@@ -367,9 +367,11 @@ jobs:
       - run:
           name: Deploy backend
           command: |
-            pwd
-            cat .circleci/ansible/inventory.txt
-            ansible-playbook -i .circleci/ansible/inventory.txt .circleci/ansible/deploy-backend.yml -vv
+            pwd            
+            cd  .circleci/ansible
+            cat inventory.txt
+            export ANSIBLE_HOST_KEY_CHECKING=False
+            ansible-playbook -i inventory.txt deploy-backend.yml -vv
             echo "Done"  
 
   smoke-test:
