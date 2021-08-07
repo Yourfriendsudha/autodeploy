@@ -223,7 +223,7 @@ jobs:
               --filters "Name=tag:project,Values=udapeople-backend-prod-${CIRCLE_WORKFLOW_ID:0:7}" \
               --query 'Reservations[*].Instances[*].PublicIpAddress' \
               --output text)
-            echo "[all]" >> .circleci/ansible/inventory.txt
+            echo "[all]" >> inventory.txt
             echo "$BACKEND_GET_IP" >> inventory.txt
             echo "------inventory contents------"
             cat inventory.txt
