@@ -24,7 +24,7 @@
 - name: "Install backend dependencies using NPM"
   command: npm install --production
   args:
-    chdir: /home/ubuntu/app
+    chdir: /home/ubuntu/udapeople
 
 - name: "Start backend with pm2"
   shell: |
