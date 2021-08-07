@@ -428,11 +428,6 @@ jobs:
           command: |
             pwd
             cat .circleci/ansible/inventory.txt
-            cd dist
-            cp ../package.json .
-            zip -rq dist.zip *
-            mkdir -p .circleci/.ansible/roles/deploy/files/
-            mv dist.zip .circleci/.ansible/roles/deploy/files/
             ansible-playbook -i .circleci/ansible/inventory.txt .circleci/ansible/deploy-backend.yml 
             echo "Done"  
       - destroy-environment:
@@ -551,8 +546,7 @@ workflows:
       - scan-frontend:
           requires: [build-frontend]
       - deploy-infrastructure:          
-          #requires: [test-frontend, test-backend, scan-frontend, scan-backend]
-          requires: [scan-frontend, scan-backend]
+          requires: [test-frontend, test-backend, scan-frontend, scan-backend]
           filters:
             branches:
               only: [master]
