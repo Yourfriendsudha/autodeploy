@@ -417,20 +417,27 @@ jobs:
       - run:
           name: Install dependencies
           command: |
-            
+            yum install -y tar gzip curl
+            curl -sL https://rpm.nodesource.com/setup_10.x | bash -        
+      - run:
+          name: store workflow ID befor updating cloudfront 
+          command: |
+            OldWorkflowId=$(aws cloudformation list-exports --query "Exports[?Name=='WorkflowID'].Value" --no-paginate --output text)
+            echo "Old workflow ID  is ${OldWorkflowId}"
+            if [ ! -z $OldWorkflowId ]
+            then
+              curl -H "Content-Type: text/plain" -H "token: 9a087c8d-59a3-475a-a1a1-915a0bf3c376" --request PUT --data ${OldWorkflowId} https://api.memstash.io/values/OldWorkflowID
+            else
+              echo "No WorkflowID found"
+              
+            fi            
       - run:
           name: Update cloudfront distribution
-          command: |
-            OLD_WORKFLOW_ID=$(aws cloudformation \
-              list-exports --query "Exports[?Name==\`UdapeopleWorkflowID\`].Value" \
-              --no-paginate --output text)
-            echo "OLD_WORKFLOW_ID: $OLD_WORKFLOW_ID."
-            export STACKS=($(aws cloudformation list-stacks --query "StackSummaries[*].StackName" \
-              --stack-status-filter CREATE_COMPLETE --no-paginate --output text))
-            printf '%s\n' "${STACKS[@]}"
+          command: |  
             aws cloudformation deploy \
-              --template-file .circleci/cloudformation/cloudfront_infrastructure.yml \
-              --parameter-overrides ID="prod-${CIRCLE_WORKFLOW_ID:0:7}" \
+              --template-file .circleci/files/cloudfront.yml \
+              --tags project=udapeople-cloudfront-${CIRCLE_WORKFLOW_ID} \
+              --parameter-overrides WorkflowID="cloudfront-prod-${CIRCLE_WORKFLOW_ID:0:7}" \
               --stack-name udapeople-prod-cloudfront
       - persist_to_workspace:
           root: ~/
