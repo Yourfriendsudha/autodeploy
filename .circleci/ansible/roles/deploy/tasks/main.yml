@@ -1,65 +1,34 @@
 ---
-  - name: "upgrade packages."
-    become: true
-    apt:
-     upgrade: "yes"  
+- name: "Creates backend app directory"
+  file:
+    path: ~/backend_app
+    state: directory
 
-  - name: "install dependencies."
-    become: true
-    apt:
-     name: ["nodejs", "npm", "tar"]
-     state: latest
-     update_cache: yes
-     
-  - name: "copy backend binaries"
-    become: yes
-    synchronize:
-      src: ../../backend/dist
-      dest: /home/ubuntu/udapeople
-      recursive: true
+- name: "Copy compiled backend app"
+  copy:
+    src: dist.zip
+    dest: "~/backend_app/dist.zip"
 
-  - name: "copy node_modules"
-    become: yes
-    synchronize:
-      src: ../../backend/node_modules
-      dest: /home/ubuntu/udapeople
-      recursive: true
-      
-  - name: "install pm2"
-    become: true
-    npm:
-     name: pm2
-     global: yes
-     production: yes
-     state: present
-    
-  - name: "stop all running instances"
-    become: true
-    command: pm2 delete all
-    ignore_errors: true
+- name: "Unzip backend files to correct directory"
+  shell: |
+    cd ~/backend_app
+    unzip dist.zip
+    rm -rf dist.zip
+- name: "Install dependencies for project"
+  shell: |
+    cd ~/backend_app
+    npm install
+- name: "Executing node"
+  shell: |
+    export
+    cd ~/backend_app
+    pm2 start main.js
+  register: execute_node
 
-  - name: "start server"
-    become: true
-    command: pm2 start -f ./main.js
-    args:
-      chdir: /home/ubuntu/udapeople/dist
-    register: execute_node  
-    
-  - name: print message
-    debug:
-      msg: "{{ execute_node.stdout_lines }}"
+- name: print message
+  debug:
+    msg: "{{ execute_node.stdout_lines }}"
 
-  - name: "Configure pm2 to start as service"
-    shell: |
-      env PATH=$PATH:/usr/local/bin pm2 startup -u ubuntu
-
-    environment:
-      TYPEORM_CONNECTION: "{{ lookup('env','TYPEORM_CONNECTION') }}"
-      TYPEORM_HOST: "{{ lookup('env','TYPEORM_HOST') }}"
-      TYPEORM_PORT: "{{ lookup('env','TYPEORM_PORT') }}"
-      TYPEORM_USERNAME: "{{ lookup('env','TYPEORM_USERNAME') }}"
-      TYPEORM_PASSWORD: "{{ lookup('env','TYPEORM_PASSWORD') }}"
-      TYPEORM_DATABASE: "{{ lookup('env','TYPEORM_DATABASE') }}"
-      TYPEORM_MIGRATIONS_DIR: "{{ lookup('env','TYPEORM_MIGRATIONS_DIR') }}"
-      TYPEORM_MIGRATIONS: ."{{ lookup('env','TYPEORM_MIGRATIONS') }}"
-      TYPEORM_ENTITIES: "{{ lookup('env','TYPEORM_ENTITIES') }}"
+- name: "Configure pm2 to start as service"
+  shell: |
+    env PATH=$PATH:/usr/local/bin pm2 startup -u ubuntu
