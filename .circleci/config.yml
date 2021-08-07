@@ -342,7 +342,7 @@ jobs:
       - add_ssh_keys:
           fingerprints: ["f6:35:9d:5c:15:81:f8:b2:c4:85:a1:da:81:36:36:ce"]
       - attach_workspace:
-          at: ~/
+          at: .circleci/ansible/
       - run:
           name: Install dependencies
           command: |
@@ -382,7 +382,8 @@ jobs:
             cat dist/.env
             tar -czvf app.tar.gz ./dist/*
             cp app.tar.gz ~/project/.circleci/ansible/roles/deploy/files/
-
+            
+            pwd  
             cd ~/project/.circleci/ansible
 
             export ANSIBLE_HOST_KEY_CHECKING=False
