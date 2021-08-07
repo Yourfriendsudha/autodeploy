@@ -403,7 +403,7 @@ jobs:
       - add_ssh_keys:
           fingerprints: ["f6:35:9d:5c:15:81:f8:b2:c4:85:a1:da:81:36:36:ce"]
       - attach_workspace:
-          at: .      
+          at: .
       - run:
           name: Install dependencies
           working_directory: /tmp          
@@ -411,19 +411,29 @@ jobs:
             apk add --update ansible curl openssh nodejs npm rsync
             pip install awscli
       - restore_cache:
-          keys: [<< pipeline.id >>-backend-build]         
+          keys: [<< pipeline.id >>-backend-build]     
+      - run:
+          name: Build backend
+          command: |
+            cd backend
+            npm i
+            npm audit fix
+            npm run build
+      - persist_to_workspace:
+          root: ~/
+          paths:
+            - project/backend/dist                          
       - run:
           name: Deploy backend
-          working_directory: .backend
           command: |
             pwd
-            cat inventory.txt
+            cat .circleci/ansible/inventory.txt
             cd dist
             cp ../package.json .
             zip -rq dist.zip *
             mkdir -p .circleci/.ansible/roles/deploy/files/
             mv dist.zip .circleci/.ansible/roles/deploy/files/
-            ansible-playbook -i ./.circleci/ansible/inventory.txt ./.circleci/ansible/deploy-backend.yml 
+            ansible-playbook -i .circleci/ansible/inventory.txt .circleci/ansible/deploy-backend.yml 
             echo "Done"  
       - destroy-environment:
           id: ${CIRCLE_WORKFLOW_ID}
