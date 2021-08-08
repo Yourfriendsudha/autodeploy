@@ -435,7 +435,7 @@ jobs:
             aws cloudformation update-stack \
                  --use-previous-template \
                 --stack-name udapeople-cloudfront-76a6d95 \
-                --parameters ParameterKey=WorkflowID,ParameterValue=${CIRCLE_WORKFLOW_ID:0:7},UsePreviousValue=false --region=us-west-2
+                --parameters ParameterKey=WorkflowID,ParameterValue=${CIRCLE_WORKFLOW_ID:0:7},UsePreviousValue=false --region=us-west-1
       - destroy-environment:
           workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
       - revert-migrations:
